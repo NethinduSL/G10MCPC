@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Participation Tracker</title>
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            height: 100vh;
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            padding: 20px;
+        }
+        input {
+            padding: 10px;
+            font-size: 16px;
+            width: 300px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            margin-bottom: 10px; /* Added margin for spacing */
+        }
+        button {
+            padding: 10px;
+            font-size: 16px;
+            cursor: pointer;
+            background-color: #28a745;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            margin-left: 5px;
+        }
+        button:hover {
+            background-color: #218838;
+        }
+        .section {
+            margin-top: 20px;
+            width: 80%;
+            max-width: 600px;
+        }
+        .participated, .not-participated {
+            margin-top: 20px;
+            border-top: 1px solid #ccc;
+            padding-top: 10px;
+        }
+        .header {
+            font-weight: bold;
+            font-size: 20px;
+            margin-bottom: 10px;
+        }
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        li {
+            padding: 5px;
+            background: #e9ecef;
+            border-radius: 5px;
+            margin-bottom: 5px;
+        }
+        #downloadButton {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Participation Tracker</h1>
+    <button id="downloadButton">Download PDF</button>
+    <input type="text" id="searchInput" placeholder="Enter first 3 characters..." autofocus>
+    <button id="addButton">Add to Participated</button>
+
+    <div class="section">
+        <div class="participated" id="participatedData">
+            <div class="header">Participated</div>
+            <ul id="participatedList"></ul>
+        </div>
+        <div class="not-participated" id="notParticipatedData">
+            <div class="header">Not Participated</div>
+            <ul id="notParticipatedList"></ul>
+        </div>
+    </div>
+
+    <script src=""pdf.js></script>
+    <script>
+        // Sample data for children
+        const children = {
+            "A01": "John Doe",
+            "A02": "Jane Smith",
+            "A03": "Mike Johnson",
+            "A04": "Emily Davis",
+            "A05": "James Wilson",
+            "A06": "Sarah Brown",
+            "A07": "David Lee",
+            "A08": "Laura Martinez",
+            "A09": "Chris Garcia",
+            "A10": "Jessica Taylor",
+        };
+
+        let participatedChildren = [];
+
+        function addToParticipated() {
+            const input = document.getElementById('searchInput').value.trim();
+            if (children[input] && !participatedChildren.includes(input)) {
+                const timeStamp = new Date().toLocaleTimeString(); // Only get time
+                participatedChildren.push(input); // Add to participated list
+                const participatedList = document.getElementById('participatedList');
+                const li = document.createElement('li');
+                li.textContent = `${input} ${children[input]} (Added at: ${timeStamp})`;
+                participatedList.appendChild(li);
+            }
+            document.getElementById('searchInput').value = ''; // Clear input after adding
+            document.getElementById('searchInput').focus(); // Focus back to input
+        }
+
+        document.getElementById('addButton').addEventListener('click', addToParticipated);
+
+        // Allow adding by pressing the Enter key
+        document.getElementById('searchInput').addEventListener('keypress', function(event) {
+            if (event.key === 'Enter') {
+                addToParticipated();
+            }
+        });
+
+        // Automatically focus on the input box when the page loads
+        window.onload = function() {
+            document.getElementById('searchInput').focus();
+            displayNotParticipated(); // Display not participated on load
+        }
+
+        function displayNotParticipated() {
+            const notParticipatedList = document.getElementById('notParticipatedList');
+            for (let id in children) {
+                if (!participatedChildren.includes(id)) {
+                    const li = document.createElement('li');
+                    li.textContent = `${id} ${children[id]}`;
+                    notParticipatedList.appendChild(li);
+                }
+            }
+        }
+
+        // Function to download PDF
+        document.getElementById('downloadButton').addEventListener('click', async function() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+
+            // Add title
+            doc.text('Participation Data', 20, 10);
+            doc.text('Participated:', 20, 20);
+
+            // Add participated data
+            participatedChildren.forEach((id, index) => {
+                const name = children[id];
+                doc.text(`${id}: ${name}`, 20, 30 + (index * 10));
+            });
+
+            // Add not participated data
+            doc.text('Not Participated:', 20, 30 + (participatedChildren.length * 10) + 10);
+            let notParticipatedIndex = 0;
+
+            for (let id in children) {
+                if (!participatedChildren.includes(id)) {
+                    const name = children[id];
+                    doc.text(`${id}: ${name}`, 20, 50 + (participatedChildren.length * 10) + (notParticipatedIndex * 10));
+                    notParticipatedIndex++;
+                }
+            }
+
+            // Save the PDF
+            doc.save('participation_data.pdf');
+        });
+    </script>
+
+</body>
+</html>
