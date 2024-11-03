@@ -432,35 +432,55 @@
         }
 
         // Function to download PDF
-        document.getElementById('downloadButton').addEventListener('click', async function() {
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
+document.getElementById('downloadButton').addEventListener('click', async function() {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
 
-            // Add title
-            doc.text('Participation Data', 20, 10);
-            doc.text('Participated:', 20, 20);
+    // Add title
+    doc.text('Participation Data', 20, 10);
+    doc.text('Participated:', 20, 20);
 
-            // Add participated data
-            participatedChildren.forEach((id, index) => {
-                const name = children[id];
-                doc.text(`${id}: ${name}`, 20, 30 + (index * 10));
-            });
+    // Variables to track positioning
+    let yPos = 30;
+    const lineHeight = 10;
+    const pageHeight = doc.internal.pageSize.height;
 
-            // Add not participated data
-            doc.text('Not Participated:', 20, 30 + (participatedChildren.length * 10) + 10);
-            let notParticipatedIndex = 0;
+    // Add participated data
+    participatedChildren.forEach((id, index) => {
+        const name = children[id];
+        if (yPos > pageHeight - 20) {
+            doc.addPage(); // Add a new page if data goes beyond current page height
+            yPos = 20; // Reset position on the new page
+        }
+        doc.text(`${id}: ${name}`, 20, yPos);
+        yPos += lineHeight;
+    });
 
-            for (let id in children) {
-                if (!participatedChildren.includes(id)) {
-                    const name = children[id];
-                    doc.text(`${id}: ${name}`, 20, 50 + (participatedChildren.length * 10) + (notParticipatedIndex * 10));
-                    notParticipatedIndex++;
-                }
+    // Add not participated data title
+    if (yPos > pageHeight - 20) {
+        doc.addPage();
+        yPos = 20;
+    }
+    doc.text('Not Participated:', 20, yPos);
+    yPos += lineHeight;
+
+    // Add not participated data
+    for (let id in children) {
+        if (!participatedChildren.includes(id)) {
+            const name = children[id];
+            if (yPos > pageHeight - 20) {
+                doc.addPage();
+                yPos = 20;
             }
+            doc.text(`${id}: ${name}`, 20, yPos);
+            yPos += lineHeight;
+        }
+    }
 
-            // Save the PDF
-            doc.save('participation_data.pdf');
-        });
+    // Save the PDF
+    doc.save('participation_data.pdf');
+});
+
     </script>
 
 </body>
