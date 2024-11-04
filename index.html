@@ -397,107 +397,110 @@
             
         };
 
+
+
         let participatedChildren = [];
 
-        function addToParticipated() {
-            const input = document.getElementById('searchInput').value.trim();
-            if (children[input] && !participatedChildren.includes(input)) {
-                const timeStamp = new Date().toLocaleTimeString(); // Only get time
-                participatedChildren.push(input); // Add to participated list
-                const participatedList = document.getElementById('participatedList');
-                const li = document.createElement('li');
-                li.textContent = `${input} ${children[input]} -${timeStamp}`;
-                participatedList.appendChild(li);
-            }
-            document.getElementById('searchInput').value = ''; // Clear input after adding
-            document.getElementById('searchInput').focus(); // Focus back to input
+function addToParticipated() {
+    const input = document.getElementById('searchInput').value.trim();
+    if (children[input] && !participatedChildren.find(child => child.id === input)) {
+        const timeStamp = new Date().toLocaleTimeString();
+        participatedChildren.push({ id: input, timestamp: timeStamp }); // Store as an object
+        const participatedList = document.getElementById('participatedList');
+        const li = document.createElement('li');
+        li.textContent = `${input} ${children[input]} - ${timeStamp}`;
+        participatedList.appendChild(li);
+    }
+    document.getElementById('searchInput').value = ''; // Clear input after adding
+    document.getElementById('searchInput').focus(); // Focus back to input
+}
+
+document.getElementById('addButton').addEventListener('click', addToParticipated);
+
+// Allow adding by pressing the Enter key
+document.getElementById('searchInput').addEventListener('keypress', function(event) {
+    if (event.key === 'Enter') {
+        addToParticipated();
+    }
+});
+
+// Automatically focus on the input box when the page loads
+window.onload = function() {
+    document.getElementById('searchInput').focus();
+    displayNotParticipated(); // Display not participated on load
+}
+
+function displayNotParticipated() {
+    const notParticipatedList = document.getElementById('notParticipatedList');
+    for (let id in children) {
+        if (!participatedChildren.find(child => child.id === id)) {
+            const li = document.createElement('li');
+            li.textContent = `${id} ${children[id]}`;
+            notParticipatedList.appendChild(li);
         }
+    }
+}
 
-        document.getElementById('addButton').addEventListener('click', addToParticipated);
+// Function to download PDF
+document.getElementById('downloadButton').addEventListener('click', function() {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
 
-        // Allow adding by pressing the Enter key
-        document.getElementById('searchInput').addEventListener('keypress', function(event) {
-            if (event.key === 'Enter') {
-                addToParticipated();
-            }
-        });
+    // Add title
+    doc.text('Participation Data', 20, 10);
+    doc.text('Participated:', 20, 20);
 
-        // Automatically focus on the input box when the page loads
-        window.onload = function() {
-            document.getElementById('searchInput').focus();
-            displayNotParticipated(); // Display not participated on load
-        }
+    // Define table columns
+    const columns = ["Registration No.", "Name", "Timestamp"];
 
-        function displayNotParticipated() {
-            const notParticipatedList = document.getElementById('notParticipatedList');
-            for (let id in children) {
-                if (!participatedChildren.includes(id)) {
-                    const li = document.createElement('li');
-                    li.textContent = `${id} ${children[id]}`;
-                    notParticipatedList.appendChild(li);
-                }
-            }
-        }
+    // Define arrays to store table rows for participated and not participated children
+    const participatedData = [];
+    const notParticipatedData = [];
 
-        // Function to download PDF
-    document.getElementById('downloadButton').addEventListener('click', function() {
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF();
+    // Populate participated data with recorded timestamps
+    participatedChildren.forEach((child) => {
+        const id = child.id;
+        const name = children[id];
+        const timestamp = child.timestamp;
+        participatedData.push([id, name, timestamp]);
+    });
 
-        // Add title
-        doc.text('Participation Data', 20, 10);
-        doc.text('Participated:', 20, 20);
-
-        // Define table columns
-        const columns = ["Registration No.", "Name", "Timestamp"];
-
-        // Define arrays to store table rows for participated and not participated children
-        const participatedData = [];
-        const notParticipatedData = [];
-
-        // Populate participated data
-        participatedChildren.forEach((id) => {
+    // Populate not participated data
+    for (let id in children) {
+        if (!participatedChildren.find(child => child.id === id)) {
             const name = children[id];
-            const timestamp = new Date().toLocaleString(); // Generate timestamp or use an actual one if available
-            participatedData.push([id, name, timestamp]);
-        });
-
-        // Populate not participated data
-        for (let id in children) {
-            if (!participatedChildren.includes(id)) {
-                const name = children[id];
-                const timestamp = "N/A"; // No timestamp for non-participants
-                notParticipatedData.push([id, name, timestamp]);
-            }
+            const timestamp = "N/A";
+            notParticipatedData.push([id, name, timestamp]);
         }
+    }
 
-        // Add participated table
+    // Add participated table
+    doc.autoTable({
+        head: [columns],
+        body: participatedData,
+        startY: 30,
+        theme: 'grid',
+        styles: { fontSize: 10, halign: 'center', valign: 'middle' },
+    });
+
+    // Calculate new position after the first table
+    let finalY = doc.lastAutoTable.finalY + 10;
+    doc.text('Not Participated:', 20, finalY);
+
+    // Add not participated table if there are non-participants
+    if (notParticipatedData.length > 0) {
         doc.autoTable({
             head: [columns],
-            body: participatedData,
-            startY: 30, // Start the table below the title
+            body: notParticipatedData,
+            startY: finalY + 10,
             theme: 'grid',
             styles: { fontSize: 10, halign: 'center', valign: 'middle' },
         });
+    }
 
-        // Calculate new position after the first table
-        let finalY = doc.lastAutoTable.finalY + 10;
-        doc.text('Not Participated:', 20, finalY);
-
-        // Add not participated table if there are non-participants
-        if (notParticipatedData.length > 0) {
-            doc.autoTable({
-                head: [columns],
-                body: notParticipatedData,
-                startY: finalY + 10,
-                theme: 'grid',
-                styles: { fontSize: 10, halign: 'center', valign: 'middle' },
-            });
-        }
-
-        // Save the PDF
-        doc.save('participation_data.pdf');
-    });
+    // Save the PDF
+    doc.save('participation_data.pdf');
+});
 
     </script>
 
