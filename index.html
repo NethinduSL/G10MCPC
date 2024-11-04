@@ -439,65 +439,64 @@
         }
 
         // Function to download PDF
-document.getElementById('downloadButton').addEventListener('click', async function() {
+    document.getElementById('downloadButton').addEventListener('click', function() {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
 
-    const { jsPDF } = window.jspdf;
-const doc = new jsPDF();
+        // Add title
+        doc.text('Participation Data', 20, 10);
+        doc.text('Participated:', 20, 20);
 
-// Add title
-doc.text('Participation Data', 20, 10);
-doc.text('Participated:', 20, 20);
+        // Define table columns
+        const columns = ["Registration No.", "Name", "Timestamp"];
 
-// Define table columns
-const columns = ["Registration No.", "Name", "Timestamp"];
+        // Define arrays to store table rows for participated and not participated children
+        const participatedData = [];
+        const notParticipatedData = [];
 
-// Define arrays to store table rows for participated and not participated children
-const participatedData = [];
-const notParticipatedData = [];
+        // Populate participated data
+        participatedChildren.forEach((id) => {
+            const name = children[id];
+            const timestamp = new Date().toLocaleString(); // Generate timestamp or use an actual one if available
+            participatedData.push([id, name, timestamp]);
+        });
 
-// Populate participated data
-participatedChildren.forEach((id) => {
-    const name = children[id];
-    const timestamp = new Date().toLocaleString(); // Use timestamp if available, or generate it
-    participatedData.push([id, name, timestamp]);
-});
+        // Populate not participated data
+        for (let id in children) {
+            if (!participatedChildren.includes(id)) {
+                const name = children[id];
+                const timestamp = "N/A"; // No timestamp for non-participants
+                notParticipatedData.push([id, name, timestamp]);
+            }
+        }
 
-// Populate not participated data
-for (let id in children) {
-    if (!participatedChildren.includes(id)) {
-        const name = children[id];
-        const timestamp = "N/A"; // No timestamp for non-participants
-        notParticipatedData.push([id, name, timestamp]);
-    }
-}
+        // Add participated table
+        doc.autoTable({
+            head: [columns],
+            body: participatedData,
+            startY: 30, // Start the table below the title
+            theme: 'grid',
+            styles: { fontSize: 10, halign: 'center', valign: 'middle' },
+        });
 
-// Add participated table
-doc.autoTable({
-    head: [columns],
-    body: participatedData,
-    startY: 30, // Start the table below the title
-    theme: 'grid',
-    styles: { fontSize: 10, halign: 'center', valign: 'middle' },
-});
+        // Calculate new position after the first table
+        let finalY = doc.lastAutoTable.finalY + 10;
+        doc.text('Not Participated:', 20, finalY);
 
-// Calculate new position after the first table
-let finalY = doc.lastAutoTable.finalY + 10;
-doc.text('Not Participated:', 20, finalY);
+        // Add not participated table if there are non-participants
+        if (notParticipatedData.length > 0) {
+            doc.autoTable({
+                head: [columns],
+                body: notParticipatedData,
+                startY: finalY + 10,
+                theme: 'grid',
+                styles: { fontSize: 10, halign: 'center', valign: 'middle' },
+            });
+        }
 
-// Add not participated table if there are non-participants
-if (notParticipatedData.length > 0) {
-    doc.autoTable({
-        head: [columns],
-        body: notParticipatedData,
-        startY: finalY + 10,
-        theme: 'grid',
-        styles: { fontSize: 10, halign: 'center', valign: 'middle' },
+        // Save the PDF
+        doc.save('participation_data.pdf');
     });
-}
-
-// Save the PDF
-doc.save('participation_data.pdf');
-
 
     </script>
 
