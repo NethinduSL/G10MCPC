@@ -475,6 +475,16 @@ li:hover {
 //Class F 
             
         };
+const children = {
+    // class A by Nethindu 
+    "A1": "D.W.Minindu Pabasara",
+    "A2": "Another A Student",
+    "B3": "K.M. Kalana Sandeepa",
+    "C15": "Binara W. Wijesekara",
+    "D11": "yakka",
+    "E23": "madush",
+    "F23": "haloo"
+};
 
 let participatedChildren = [];
 
@@ -483,13 +493,50 @@ function addToParticipated() {
     if (children[input] && !participatedChildren.find(child => child.id === input)) {
         const timeStamp = new Date().toLocaleTimeString();
         participatedChildren.push({ id: input, timestamp: timeStamp }); // Store as an object
-        const participatedList = document.getElementById('participatedList');
-        const li = document.createElement('li');
-        li.textContent = `${input} ${children[input]} - ${timeStamp}`;
-        participatedList.appendChild(li);
+        updateParticipatedList();
     }
     document.getElementById('searchInput').value = ''; // Clear input after adding
     document.getElementById('searchInput').focus(); // Focus back to input
+}
+
+function updateParticipatedList() {
+    const participatedList = document.getElementById('participatedList');
+    participatedList.innerHTML = ''; // Clear the list first
+    participatedChildren.forEach((child) => {
+        const li = document.createElement('li');
+        li.textContent = `${child.id} ${children[child.id]} - ${child.timestamp} `;
+        
+        // Create the ❌ button to remove the child
+        const removeButton = document.createElement('button');
+        removeButton.textContent = '❌';
+        removeButton.onclick = () => removeFromParticipated(child.id);
+        
+        // Create the 🕕 button to change time
+        const changeTimeButton = document.createElement('button');
+        changeTimeButton.textContent = '🕕';
+        changeTimeButton.onclick = () => changeTime(child.id);
+        
+        li.appendChild(removeButton);
+        li.appendChild(changeTimeButton);
+        participatedList.appendChild(li);
+    });
+}
+
+function removeFromParticipated(id) {
+    participatedChildren = participatedChildren.filter(child => child.id !== id);
+    updateParticipatedList(); // Update the displayed list
+    displayNotParticipated(); // Update the not participated list
+}
+
+function changeTime(id) {
+    const newTime = prompt("Enter new time (HH:MM:SS):", new Date().toLocaleTimeString());
+    if (newTime) {
+        const child = participatedChildren.find(child => child.id === id);
+        if (child) {
+            child.timestamp = newTime; // Update timestamp
+            updateParticipatedList(); // Refresh the list display
+        }
+    }
 }
 
 document.getElementById('addButton').addEventListener('click', addToParticipated);
@@ -509,6 +556,7 @@ window.onload = function() {
 
 function displayNotParticipated() {
     const notParticipatedList = document.getElementById('notParticipatedList');
+    notParticipatedList.innerHTML = ''; // Clear the list first
     for (let id in children) {
         if (!participatedChildren.find(child => child.id === id)) {
             const li = document.createElement('li');
@@ -531,18 +579,12 @@ function showClassSelection() {
     popup.innerHTML = `
         <h2>Select Class to Download</h2>
         <button onclick="downloadPDF('A')">Class A</button>
-        <p></p>
         <button onclick="downloadPDF('B')">Class B</button>
-        <p></p>
         <button onclick="downloadPDF('C')">Class C</button>
-        <p></p>
         <button onclick="downloadPDF('D')">Class D</button>
-        <p></p>
         <button onclick="downloadPDF('E')">Class E</button>
         <button onclick="downloadPDF('F')">Class F</button>
-        <p></p>
         <button onclick="downloadPDF('All')">All Classes</button>
-        <p></p>
         <button onclick="closePopup()">Close</button>
     `;
     document.body.appendChild(popup);
@@ -630,6 +672,7 @@ function downloadPDF(selectedClass) {
     // Close the popup after downloading
     closePopup();
 }
+
 
     </script>
 
