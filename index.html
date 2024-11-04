@@ -448,7 +448,11 @@ document.getElementById('downloadButton').addEventListener('click', function() {
 
     // Add title
     doc.text('Participation Data', 20, 10);
-    doc.text('Participated:', 20, 20);
+    const currentDate = new Date();
+const formattedDate = `${currentDate.getFullYear()}-${(currentDate.getMonth() + 1).toString().padStart(2, '0')}-${currentDate.getDate().toString().padStart(2, '0')}`;
+
+    doc.text(`Date: ${formattedDate}`, 20, 20);
+    doc.text('Participated:', 20, 30);
 
     // Define table columns
     const columns = ["Registration No.", "Name", "Timestamp"];
@@ -469,7 +473,7 @@ document.getElementById('downloadButton').addEventListener('click', function() {
     for (let id in children) {
         if (!participatedChildren.find(child => child.id === id)) {
             const name = children[id];
-            const timestamp = "N/A";
+            const timestamp = "Absents";
             notParticipatedData.push([id, name, timestamp]);
         }
     }
@@ -478,7 +482,7 @@ document.getElementById('downloadButton').addEventListener('click', function() {
     doc.autoTable({
         head: [columns],
         body: participatedData,
-        startY: 30,
+        startY: 4p,
         theme: 'grid',
         styles: { fontSize: 10, halign: 'center', valign: 'middle' },
     });
