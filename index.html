@@ -145,50 +145,6 @@ li:hover {
 }
 
 
-.button-remove {
-    background-color: #ff4c4c; /* Red background */
-    border: none;
-    color: white;
-    padding: 10px;
-    text-align: center;
-    text-decoration: none;
-    display: inline-block;
-    font-size: 20px; /* Larger font for emoji */
-    margin: 4px 2px;
-    cursor: pointer;
-    border-radius: 50%; /* Round shape for the ❌ button */
-    transition: background-color 0.3s; /* Smooth transition */
-}
-
-.button-remove:hover {
-    background-color: #d32f2f; /* Darker red on hover */
-}
-
-.button-change-time {
-    background-color: #ffc107; /* Yellow background */
-    border: none;
-    color: white;
-    padding: 10px;
-    text-align: center;
-    text-decoration: none;
-    display: inline-block;
-    font-size: 20px; /* Larger font for emoji */
-    margin: 4px 2px;
-    cursor: pointer;
-    border-radius: 50%; /* Round shape for the 🕕 button */
-    transition: background-color 0.3s; /* Smooth transition */
-}
-
-.button-change-time:hover {
-    background-color: #ffa000; /* Darker yellow on hover */
-}
-
-
-
-
-
-        
-
     </style>
 </head>
 <body>
@@ -197,7 +153,6 @@ li:hover {
     <button id="downloadButton">Download PDF</button>
     <input type="text" id="searchInput" placeholder="Enter class and register number Eg-B32" autofocus>
     <button id="addButton">Add to Participated</button>
-
 
     <div class="section">
         <div class="participated" id="participatedData">
@@ -542,23 +497,14 @@ function updateParticipatedList() {
         li.textContent = `${child.id} ${children[child.id]} - ${child.timestamp} `;
         
         // Create the ❌ button to remove the child
-        // Create the ❌ button to remove the child
-const removeButton = document.createElement('button');
-removeButton.textContent = '❌';
-removeButton.className = 'button-remove'; // Assign class for styles
-removeButton.onclick = () => removeFromParticipated(child.id);
-
-// Create the 🕕 button to change time
-const changeTimeButton = document.createElement('button');
-changeTimeButton.textContent = '🕕';
-changeTimeButton.className = 'button-change-time'; // Assign class for styles
-changeTimeButton.onclick = () => changeTime(child.id);
-
-// Append the buttons to the desired parent element
-const parentElement = document.getElementById('someParentElement'); // Replace with your actual parent element ID
-parentElement.appendChild(removeButton);
-parentElement.appendChild(changeTimeButton);
-
+        const removeButton = document.createElement('button');
+        removeButton.textContent = '❌';
+        removeButton.onclick = () => removeFromParticipated(child.id);
+        
+        // Create the 🕕 button to change time
+        const changeTimeButton = document.createElement('button');
+        changeTimeButton.textContent = '🕕';
+        changeTimeButton.onclick = () => changeTime(child.id);
         
         li.appendChild(removeButton);
         li.appendChild(changeTimeButton);
