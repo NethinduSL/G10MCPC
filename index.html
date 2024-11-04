@@ -476,6 +476,18 @@ li:hover {
             
         };
 
+
+const children = {
+    // Sample data for classes
+    "A1": "D.W.Minindu Pabasara",
+    "A2": "Another A Student",
+    "B3": "K.M. Kalana Sandeepa",
+    "C15": "Binara W. Wijesekara",
+    "D11": "yakka",
+    "E23": "madush",
+    "F23": "haloo"
+};
+
 let participatedChildren = [];
 
 function addToParticipated() {
@@ -490,26 +502,46 @@ function addToParticipated() {
 }
 
 function updateParticipatedList() {
-    const participatedList = document.getElementById('participatedList');
-    participatedList.innerHTML = ''; // Clear the list first
-    participatedChildren.forEach((child) => {
-        const li = document.createElement('li');
-        li.textContent = `${child.id} ${children[child.id]} - ${child.timestamp} `;
-        
-        // Create the ❌ button to remove the child
-        const removeButton = document.createElement('button');
-        removeButton.textContent = '❌';
-        removeButton.onclick = () => removeFromParticipated(child.id);
-        
-        // Create the 🕕 button to change time
-        const changeTimeButton = document.createElement('button');
-        changeTimeButton.textContent = '🕕';
-        changeTimeButton.onclick = () => changeTime(child.id);
-        
-        li.appendChild(removeButton);
-        li.appendChild(changeTimeButton);
-        participatedList.appendChild(li);
+    const participatedContainer = document.getElementById('participatedContainer');
+    participatedContainer.innerHTML = ''; // Clear the container first
+    const groupedParticipated = groupByClass(participatedChildren);
+    for (const className in groupedParticipated) {
+        const classDiv = document.createElement('div');
+        classDiv.innerHTML = `<h3>Class ${className}</h3>`;
+        const ul = document.createElement('ul');
+        groupedParticipated[className].forEach((child) => {
+            const li = document.createElement('li');
+            li.textContent = `${child.id} ${children[child.id]} - ${child.timestamp} `;
+            
+            // Create the ❌ button to remove the child
+            const removeButton = document.createElement('button');
+            removeButton.textContent = '❌';
+            removeButton.onclick = () => removeFromParticipated(child.id);
+            
+            // Create the 🕕 button to change time
+            const changeTimeButton = document.createElement('button');
+            changeTimeButton.textContent = '🕕';
+            changeTimeButton.onclick = () => changeTime(child.id);
+            
+            li.appendChild(removeButton);
+            li.appendChild(changeTimeButton);
+            ul.appendChild(li);
+        });
+        classDiv.appendChild(ul);
+        participatedContainer.appendChild(classDiv);
+    }
+}
+
+function groupByClass(childrenArray) {
+    const grouped = {};
+    childrenArray.forEach(child => {
+        const className = child.id.charAt(0); // First character represents class
+        if (!grouped[className]) {
+            grouped[className] = [];
+        }
+        grouped[className].push(child);
     });
+    return grouped;
 }
 
 function removeFromParticipated(id) {
@@ -545,14 +577,22 @@ window.onload = function() {
 }
 
 function displayNotParticipated() {
-    const notParticipatedList = document.getElementById('notParticipatedList');
-    notParticipatedList.innerHTML = ''; // Clear the list first
-    for (let id in children) {
-        if (!participatedChildren.find(child => child.id === id)) {
-            const li = document.createElement('li');
-            li.textContent = `${id} ${children[id]}`;
-            notParticipatedList.appendChild(li);
-        }
+    const notParticipatedContainer = document.getElementById('notParticipatedContainer');
+    notParticipatedContainer.innerHTML = ''; // Clear the container first
+    const groupedNotParticipated = groupByClass(Object.keys(children).map(id => ({ id })));
+    for (const className in groupedNotParticipated) {
+        const classDiv = document.createElement('div');
+        classDiv.innerHTML = `<h3>Class ${className}</h3>`;
+        const ul = document.createElement('ul');
+        groupedNotParticipated[className].forEach(child => {
+            if (!participatedChildren.find(pChild => pChild.id === child.id)) {
+                const li = document.createElement('li');
+                li.textContent = `${child.id} ${children[child.id]}`;
+                ul.appendChild(li);
+            }
+        });
+        classDiv.appendChild(ul);
+        notParticipatedContainer.appendChild(classDiv);
     }
 }
 
@@ -636,33 +676,29 @@ function downloadPDF(selectedClass) {
         body: participatedData,
         startY: 40, 
         theme: 'grid',
-        headStyles: { fillColor: [241, 184, 29], textColor: [255, 255, 255] },
-        styles: { fontSize: 10, halign: 'center', valign: 'middle' },
+        headStyles: { fillColor: [22, 160, 133] },
+        styles: { cellPadding: 2, fontSize: 10 },
+        margin: { top: 10 }
     });
 
-    // Calculate new position after the first table
-    let finalY = doc.lastAutoTable.finalY + 10;
-    doc.text('Not Participated:', 20, finalY + 10);
+    // Add space between tables
+    const lastY = doc.lastAutoTable.finalY;
+    doc.text('Not Participated Children', 20, lastY + 10);
 
-    // Add not participated table if there are non-participants
-    if (notParticipatedData.length > 0) {
-        doc.autoTable({
-            head: [columns],
-            body: notParticipatedData,
-            startY: finalY + 20, 
-            theme: 'grid',
-            headStyles: { fillColor: [241, 184, 29], textColor: [255, 255, 255] },
-            styles: { fontSize: 10, halign: 'center', valign: 'middle' },
-        });
-    }
+    // Add not participated table
+    doc.autoTable({
+        head: [columns],
+        body: notParticipatedData,
+        startY: lastY + 20, 
+        theme: 'grid',
+        headStyles: { fillColor: [211, 84, 0] },
+        styles: { cellPadding: 2, fontSize: 10 },
+        margin: { top: 10 }
+    });
 
-    // Save the PDF
     doc.save('participation_data.pdf');
-
-    // Close the popup after downloading
-    closePopup();
+    closePopup(); // Close the popup after downloading
 }
-
 
     </script>
 
