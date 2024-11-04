@@ -477,8 +477,24 @@ li:hover {
         };
 
 
+let participatedChildren = [];
 
-        let participatedChildren = [];
+// Grouping children by class
+const childrenByClass = {
+    "A": {},
+    "B": {},
+    "C": {},
+    "D": {},
+    "E": {},
+    "F": {}
+};
+
+// Populate the class groups
+for (let id in children) {
+    const classKey = id.charAt(0); // Get the first character as the class
+    if (!childrenByClass[classKey]) childrenByClass[classKey] = {};
+    childrenByClass[classKey][id] = children[id];
+}
 
 function addToParticipated() {
     const input = document.getElementById('searchInput').value.trim();
@@ -497,42 +513,46 @@ function addToParticipated() {
 document.getElementById('addButton').addEventListener('click', addToParticipated);
 
 // Allow adding by pressing the Enter key
-document.getElementById('searchInput').addEventListener('keypress', function(event) {
+document.getElementById('searchInput').addEventListener('keypress', function (event) {
     if (event.key === 'Enter') {
         addToParticipated();
     }
 });
 
 // Automatically focus on the input box when the page loads
-window.onload = function() {
+window.onload = function () {
     document.getElementById('searchInput').focus();
     displayNotParticipated(); // Display not participated on load
 }
 
 function displayNotParticipated() {
     const notParticipatedList = document.getElementById('notParticipatedList');
-    for (let id in children) {
-        if (!participatedChildren.find(child => child.id === id)) {
-            const li = document.createElement('li');
-            li.textContent = `${id} ${children[id]}`;
-            notParticipatedList.appendChild(li);
+    notParticipatedList.innerHTML = ''; // Clear previous list
+
+    for (let classKey in childrenByClass) {
+        const classHeader = document.createElement('h3');
+        classHeader.textContent = `Class ${classKey}`;
+        notParticipatedList.appendChild(classHeader);
+
+        for (let id in childrenByClass[classKey]) {
+            if (!participatedChildren.find(child => child.id === id)) {
+                const li = document.createElement('li');
+                li.textContent = `${id} ${children[id]}`;
+                notParticipatedList.appendChild(li);
+            }
         }
     }
 }
 
 // Function to download PDF
-
-
-
-
-
-
-
-
-        
-document.getElementById('downloadButton').addEventListener('click', function() {
+document.getElementById('downloadButton').addEventListener('click', function () {
     const { jsPDF } = window.jspdf;
     const doc = new jsPDF();
+
+    // Prompt user for class selection
+    const classSelection = prompt("Enter class to download (A, B, C, D, E, F) or type 'all' for all children:");
+
+    const selectedClassData = (classSelection === 'all') ? childrenByClass : { [classSelection]: childrenByClass[classSelection] };
 
     // Add title
     doc.text('Participation Data', 20, 10);
@@ -541,57 +561,53 @@ document.getElementById('downloadButton').addEventListener('click', function() {
     const currentDate = new Date();
     const formattedDate = `${currentDate.getFullYear()}-${(currentDate.getMonth() + 1).toString().padStart(2, '0')}-${currentDate.getDate().toString().padStart(2, '0')}`;
     doc.text(`Date: ${formattedDate}`, 20, 20);
-    doc.text('Participated:', 20, 30);
 
-    // Define table columns
-    const columns = ["Registration No.", "Name", "Timestamp"];
+    // Iterate over selected class data
+    for (let classKey in selectedClassData) {
+        const classData = selectedClassData[classKey];
 
-    // Define arrays to store table rows for participated and not participated children
-    const participatedData = [];
-    const notParticipatedData = [];
+        // Add participated children
+        doc.text(`Class ${classKey} - Participated:`, 20, doc.autoTable.previous.finalY + 10);
+        const participatedData = participatedChildren.filter(child => classData[child.id]);
 
-    // Populate participated data with recorded timestamps
-    participatedChildren.forEach((child) => {
-        const id = child.id; // Assuming child is an object with an 'id' property
-        const name = children[id]; // Assuming 'children' is an object where keys are IDs
-        const timestamp = child.timestamp; // Assuming child has a timestamp property
-        participatedData.push([id, name, timestamp]);
-    });
-
-    // Populate not participated data
-    for (let id in children) {
-        // Check if the child is not in participatedChildren
-        if (!participatedChildren.find(child => child.id === id)) {
-            const name = children[id];
-            const timestamp = "Absents"; // Set timestamp to "Absents" for non-participants
-            notParticipatedData.push([id, name, timestamp]);
+        // Create table for participated children
+        if (participatedData.length > 0) {
+            const participatedRows = participatedData.map(child => [child.id, children[child.id], child.timestamp]);
+            doc.autoTable({
+                head: [["Registration No.", "Name", "Timestamp"]],
+                body: participatedRows,
+                startY: doc.autoTable.previous.finalY + 10,
+                theme: 'grid',
+                headStyles: { fillColor: [241, 184, 29], textColor: [255, 255, 255] },
+                styles: { fontSize: 10, halign: 'center', valign: 'middle' },
+            });
+        } else {
+            doc.text('No participated children', 20, doc.autoTable.previous.finalY + 10);
         }
-    }
 
-    // Add participated table
-    doc.autoTable({
-        head: [columns],
-        body: participatedData,
-        startY: 40, // Adjusted to place the table below the date text
-        theme: 'grid',
-        headStyles: { fillColor: [241, 184, 29], textColor: [255, 255, 255] },
-        styles: { fontSize: 10, halign: 'center', valign: 'middle' },
-    });
+        // Add not participated children
+        doc.text(`Class ${classKey} - Not Participated:`, 20, doc.autoTable.previous.finalY + 10);
+        const notParticipatedRows = [];
 
-    // Calculate new position after the first table
-    let finalY = doc.lastAutoTable.finalY + 10;
-    doc.text('Not Participated:', 20, finalY + 10); // Adjust position below the table
+        for (let id in classData) {
+            if (!participatedChildren.find(child => child.id === id)) {
+                notParticipatedRows.push([id, children[id], "Absent"]);
+            }
+        }
 
-    // Add not participated table if there are non-participants
-    if (notParticipatedData.length > 0) {
-        doc.autoTable({
-            head: [columns],
-            body: notParticipatedData,
-            startY: finalY + 20, // Adjust position to avoid overlap
-            theme: 'grid',
-            headStyles: { fillColor: [241, 184, 29], textColor: [255, 255, 255] },
-            styles: { fontSize: 10, halign: 'center', valign: 'middle' },
-        });
+        // Create table for not participated children
+        if (notParticipatedRows.length > 0) {
+            doc.autoTable({
+                head: [["Registration No.", "Name", "Timestamp"]],
+                body: notParticipatedRows,
+                startY: doc.autoTable.previous.finalY + 10,
+                theme: 'grid',
+                headStyles: { fillColor: [241, 184, 29], textColor: [255, 255, 255] },
+                styles: { fontSize: 10, halign: 'center', valign: 'middle' },
+            });
+        } else {
+            doc.text('All children participated', 20, doc.autoTable.previous.finalY + 10);
+        }
     }
 
     // Save the PDF
