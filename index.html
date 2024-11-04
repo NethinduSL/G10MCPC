@@ -476,219 +476,192 @@ li:hover {
             
         };
 
+let participatedChildren = [];
 
+function addToParticipated() {
+    const input = document.getElementById('searchInput').value.trim();
+    if (children[input] && !participatedChildren.find(child => child.id === input)) {
+        const timeStamp = new Date().toLocaleTimeString();
+        participatedChildren.push({ id: input, timestamp: timeStamp }); // Store as an object
+        updateParticipatedList();
+    }
+    document.getElementById('searchInput').value = ''; // Clear input after adding
+    document.getElementById('searchInput').focus(); // Focus back to input
+}
 
-        let participatedChildren = [];
+function updateParticipatedList() {
+    const participatedList = document.getElementById('participatedList');
+    participatedList.innerHTML = ''; // Clear the list first
+    participatedChildren.forEach((child) => {
+        const li = document.createElement('li');
+        li.textContent = `${child.id} ${children[child.id]} - ${child.timestamp} `;
+        
+        // Create the ❌ button to remove the child
+        const removeButton = document.createElement('button');
+        removeButton.textContent = '❌';
+        removeButton.onclick = () => removeFromParticipated(child.id);
+        
+        // Create the 🕕 button to change time
+        const changeTimeButton = document.createElement('button');
+        changeTimeButton.textContent = '🕕';
+        changeTimeButton.onclick = () => changeTime(child.id);
+        
+        li.appendChild(removeButton);
+        li.appendChild(changeTimeButton);
+        participatedList.appendChild(li);
+    });
+}
 
-        function addToParticipated() {
-            const input = document.getElementById('searchInput').value.trim();
-            if (children[input] && !participatedChildren.find(child => child.id === input)) {
-                const timeStamp = new Date().toLocaleTimeString();
-                participatedChildren.push({ id: input, timestamp: timeStamp }); // Store as an object
-                updateParticipatedList();
+function removeFromParticipated(id) {
+    participatedChildren = participatedChildren.filter(child => child.id !== id);
+    updateParticipatedList(); // Update the displayed list
+    displayNotParticipated(); // Update the not participated list
+}
+
+function changeTime(id) {
+    const newTime = prompt("Enter new time (HH:MM:SS):", new Date().toLocaleTimeString());
+    if (newTime) {
+        const child = participatedChildren.find(child => child.id === id);
+        if (child) {
+            child.timestamp = newTime; // Update timestamp
+            updateParticipatedList(); // Refresh the list display
+        }
+    }
+}
+
+document.getElementById('addButton').addEventListener('click', addToParticipated);
+
+// Allow adding by pressing the Enter key
+document.getElementById('searchInput').addEventListener('keypress', function(event) {
+    if (event.key === 'Enter') {
+        addToParticipated();
+    }
+});
+
+// Automatically focus on the input box when the page loads
+window.onload = function() {
+    document.getElementById('searchInput').focus();
+    displayNotParticipated(); // Display not participated on load
+}
+
+function displayNotParticipated() {
+    const notParticipatedList = document.getElementById('notParticipatedList');
+    notParticipatedList.innerHTML = ''; // Clear the list first
+    for (let id in children) {
+        if (!participatedChildren.find(child => child.id === id)) {
+            const li = document.createElement('li');
+            li.textContent = `${id} ${children[id]}`;
+            notParticipatedList.appendChild(li);
+        }
+    }
+}
+
+// Pop-up for class selection
+function showClassSelection() {
+    const popup = document.createElement('div');
+    popup.style.position = 'fixed';
+    popup.style.top = '50%';
+    popup.style.left = '50%';
+    popup.style.transform = 'translate(-50%, -50%)';
+    popup.style.padding = '20px';
+    popup.style.backgroundColor = 'white';
+    popup.style.boxShadow = '0 0 10px rgba(0,0,0,0.5)';
+    popup.innerHTML = `
+        <h2>Select Class to Download</h2>
+        <button onclick="downloadPDF('A')">Class A</button>
+        <button onclick="downloadPDF('B')">Class B</button>
+        <button onclick="downloadPDF('C')">Class C</button>
+        <button onclick="downloadPDF('D')">Class D</button>
+        <button onclick="downloadPDF('E')">Class E</button>
+        <button onclick="downloadPDF('F')">Class F</button>
+        <button onclick="downloadPDF('All')">All Classes</button>
+        <button onclick="closePopup()">Close</button>
+    `;
+    document.body.appendChild(popup);
+}
+
+function closePopup() {
+    const popup = document.querySelector('div[style*="fixed"]');
+    if (popup) {
+        document.body.removeChild(popup);
+    }
+}
+
+document.getElementById('downloadButton').addEventListener('click', showClassSelection);
+
+function downloadPDF(selectedClass) {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+
+    // Add title
+    doc.text('Participation Data', 20, 10);
+
+    // Get and format the current date
+    const currentDate = new Date();
+    const formattedDate = `${currentDate.getFullYear()}-${(currentDate.getMonth() + 1).toString().padStart(2, '0')}-${currentDate.getDate().toString().padStart(2, '0')}`;
+    doc.text(`Date: ${formattedDate}`, 20, 20);
+    doc.text(`Class: ${selectedClass}`, 20, 30);
+
+    // Define table columns
+    const columns = ["Registration No.", "Name", "Timestamp"];
+
+    // Define arrays to store table rows for participated and not participated children
+    const participatedData = [];
+    const notParticipatedData = [];
+
+    // Populate participated data with recorded timestamps
+    participatedChildren.forEach((child) => {
+        const id = child.id; 
+        const name = children[id]; 
+        const timestamp = child.timestamp; 
+        if (selectedClass === 'All' || id.startsWith(selectedClass)) {
+            participatedData.push([id, name, timestamp]);
+        }
+    });
+
+    // Populate not participated data
+    for (let id in children) {
+        if (!participatedChildren.find(child => child.id === id)) {
+            const name = children[id];
+            const timestamp = "Absents"; 
+            if (selectedClass === 'All' || id.startsWith(selectedClass)) {
+                notParticipatedData.push([id, name, timestamp]);
             }
-            document.getElementById('searchInput').value = ''; // Clear input after adding
-            document.getElementById('searchInput').focus(); // Focus back to input
         }
+    }
 
-        function updateParticipatedList() {
-            const participatedContainer = document.getElementById('participatedContainer');
-            participatedContainer.innerHTML = ''; // Clear the container first
-            const groupedParticipated = groupByClass(participatedChildren);
-            for (const className in groupedParticipated) {
-                const classDiv = document.createElement('div');
-                classDiv.innerHTML = `<h3>Class ${className}</h3>`;
-                const ul = document.createElement('ul');
-                groupedParticipated[className].forEach((child) => {
-                    const li = document.createElement('li');
-                    li.textContent = `${child.id} ${children[child.id]} - ${child.timestamp} `;
-                    
-                    // Create the ❌ button to remove the child
-                    const removeButton = document.createElement('button');
-                    removeButton.textContent = '❌';
-                    removeButton.onclick = () => removeFromParticipated(child.id);
-                    
-                    // Create the 🕕 button to change time
-                    const changeTimeButton = document.createElement('button');
-                    changeTimeButton.textContent = '🕕';
-                    changeTimeButton.onclick = () => changeTime(child.id);
-                    
-                    li.appendChild(removeButton);
-                    li.appendChild(changeTimeButton);
-                    ul.appendChild(li);
-                });
-                classDiv.appendChild(ul);
-                participatedContainer.appendChild(classDiv);
-            }
-        }
+    // Add participated table
+    doc.autoTable({
+        head: [columns],
+        body: participatedData,
+        startY: 40, 
+        theme: 'grid',
+        headStyles: { fillColor: [241, 184, 29], textColor: [255, 255, 255] },
+        styles: { fontSize: 10, halign: 'center', valign: 'middle' },
+    });
 
-        function groupByClass(childrenArray) {
-            const grouped = {};
-            childrenArray.forEach(child => {
-                const className = child.id.charAt(0); // First character represents class
-                if (!grouped[className]) {
-                    grouped[className] = [];
-                }
-                grouped[className].push(child);
-            });
-            return grouped;
-        }
+    // Calculate new position after the first table
+    let finalY = doc.lastAutoTable.finalY + 10;
+    doc.text('Not Participated:', 20, finalY + 10);
 
-        function removeFromParticipated(id) {
-            participatedChildren = participatedChildren.filter(child => child.id !== id);
-            updateParticipatedList(); // Update the displayed list
-            displayNotParticipated(); // Update the not participated list
-        }
-
-        function changeTime(id) {
-            const newTime = prompt("Enter new time (HH:MM:SS):", new Date().toLocaleTimeString());
-            if (newTime) {
-                const child = participatedChildren.find(child => child.id === id);
-                if (child) {
-                    child.timestamp = newTime; // Update timestamp
-                    updateParticipatedList(); // Refresh the list display
-                }
-            }
-        }
-
-        document.getElementById('addButton').addEventListener('click', addToParticipated);
-
-        // Allow adding by pressing the Enter key
-        document.getElementById('searchInput').addEventListener('keypress', function(event) {
-            if (event.key === 'Enter') {
-                addToParticipated();
-            }
+    // Add not participated table if there are non-participants
+    if (notParticipatedData.length > 0) {
+        doc.autoTable({
+            head: [columns],
+            body: notParticipatedData,
+            startY: finalY + 20, 
+            theme: 'grid',
+            headStyles: { fillColor: [241, 184, 29], textColor: [255, 255, 255] },
+            styles: { fontSize: 10, halign: 'center', valign: 'middle' },
         });
+    }
 
-        // Automatically focus on the input box when the page loads
-        window.onload = function() {
-            document.getElementById('searchInput').focus();
-            displayNotParticipated(); // Display not participated on load
-        }
+    // Save the PDF
+    doc.save('participation_data.pdf');
 
-        function displayNotParticipated() {
-            const notParticipatedContainer = document.getElementById('notParticipatedContainer');
-            notParticipatedContainer.innerHTML = ''; // Clear the container first
-            const groupedNotParticipated = groupByClass(Object.keys(children).map(id => ({ id })));
-            for (const className in groupedNotParticipated) {
-                const classDiv = document.createElement('div');
-                classDiv.innerHTML = `<h3>Class ${className}</h3>`;
-                const ul = document.createElement('ul');
-                groupedNotParticipated[className].forEach(child => {
-                    if (!participatedChildren.find(pChild => pChild.id === child.id)) {
-                        const li = document.createElement('li');
-                        li.textContent = `${child.id} ${children[child.id]}`;
-                        ul.appendChild(li);
-                    }
-                });
-                classDiv.appendChild(ul);
-                notParticipatedContainer.appendChild(classDiv);
-            }
-        }
-
-        // Pop-up for class selection
-        function showClassSelection() {
-            const popup = document.createElement('div');
-            popup.style.position = 'fixed';
-            popup.style.top = '50%';
-            popup.style.left = '50%';
-            popup.style.transform = 'translate(-50%, -50%)';
-            popup.style.padding = '20px';
-            popup.style.backgroundColor = 'white';
-            popup.style.boxShadow = '0 0 10px rgba(0,0,0,0.5)';
-            popup.innerHTML = `
-                <h2>Select Class to Download</h2>
-                <button onclick="downloadPDF('A')">Class A</button>
-                <button onclick="downloadPDF('B')">Class B</button>
-                <button onclick="downloadPDF('C')">Class C</button>
-                <button onclick="downloadPDF('D')">Class D</button>
-                <button onclick="downloadPDF('E')">Class E</button>
-                <button onclick="downloadPDF('F')">Class F</button>
-                <button onclick="downloadPDF('All')">All Classes</button>
-                <button onclick="closePopup()">Close</button>
-            `;
-            document.body.appendChild(popup);
-        }
-
-        function closePopup() {
-            const popup = document.querySelector('div[style*="fixed"]');
-            if (popup) {
-                document.body.removeChild(popup);
-            }
-        }
-
-        document.getElementById('downloadButton').addEventListener('click', showClassSelection);
-
-        function downloadPDF(selectedClass) {
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
-
-            // Add title
-            doc.text('Participation Data', 20, 10);
-
-            // Get and format the current date
-            const currentDate = new Date();
-            const formattedDate = `${currentDate.getFullYear()}-${(currentDate.getMonth() + 1).toString().padStart(2, '0')}-${currentDate.getDate().toString().padStart(2, '0')}`;
-            doc.text(`Date: ${formattedDate}`, 20, 20);
-            doc.text(`Class: ${selectedClass}`, 20, 30);
-
-            // Define table columns
-            const columns = ["Registration No.", "Name", "Timestamp"];
-
-            // Define arrays to store table rows for participated and not participated children
-            const participatedData = [];
-            const notParticipatedData = [];
-
-            // Populate participated data with recorded timestamps
-            participatedChildren.forEach((child) => {
-                const id = child.id; 
-                const name = children[id]; 
-                const timestamp = child.timestamp; 
-                if (selectedClass === 'All' || id.startsWith(selectedClass)) {
-                    participatedData.push([id, name, timestamp]);
-                }
-            });
-
-            // Populate not participated data
-            for (let id in children) {
-                if (!participatedChildren.find(child => child.id === id)) {
-                    const name = children[id];
-                    const timestamp = "Absents"; 
-                    if (selectedClass === 'All' || id.startsWith(selectedClass)) {
-                        notParticipatedData.push([id, name, timestamp]);
-                    }
-                }
-            }
-
-            // Add participated table
-            doc.autoTable({
-                head: [columns],
-                body: participatedData,
-                startY: 40, 
-                theme: 'grid',
-                headStyles: { fillColor: [22, 160, 133] },
-                styles: { cellPadding: 2, fontSize: 10 },
-                margin: { top: 10 }
-            });
-
-            // Add space between tables
-            const lastY = doc.lastAutoTable.finalY;
-            doc.text('Not Participated Children', 20, lastY + 10);
-
-            // Add not participated table
-            doc.autoTable({
-                head: [columns],
-                body: notParticipatedData,
-                startY: lastY + 20, 
-                theme: 'grid',
-                headStyles: { fillColor: [211, 84, 0] },
-                styles: { cellPadding: 2, fontSize: 10 },
-                margin: { top: 10 }
-            });
-
-            doc.save('participation_data.pdf');
-            closePopup(); // Close the popup after downloading
-        }
+    // Close the popup after downloading
+    closePopup();
+}
 
 
     </script>
