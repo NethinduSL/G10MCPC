@@ -440,53 +440,64 @@
 
         // Function to download PDF
 document.getElementById('downloadButton').addEventListener('click', async function() {
+
     const { jsPDF } = window.jspdf;
-    const doc = new jsPDF();
+const doc = new jsPDF();
 
-    // Add title
-    doc.text('Participation Data', 20, 10);
-    doc.text('Participated:', 20, 20);
+// Add title
+doc.text('Participation Data', 20, 10);
+doc.text('Participated:', 20, 20);
 
-    // Variables to track positioning
-    let yPos = 30;
-    const lineHeight = 10;
-    const pageHeight = doc.internal.pageSize.height;
+// Define table columns
+const columns = ["Registration No.", "Name", "Timestamp"];
 
-    // Add participated data
-    participatedChildren.forEach((id, index) => {
-        const name = children[id];
-        if (yPos > pageHeight - 20) {
-            doc.addPage(); // Add a new page if data goes beyond current page height
-            yPos = 20; // Reset position on the new page
-        }
-        doc.text(`${id}: ${name}`, 20, yPos);
-        yPos += lineHeight;
-    });
+// Define arrays to store table rows for participated and not participated children
+const participatedData = [];
+const notParticipatedData = [];
 
-    // Add not participated data title
-    if (yPos > pageHeight - 20) {
-        doc.addPage();
-        yPos = 20;
-    }
-    doc.text('Not Participated:', 20, yPos);
-    yPos += lineHeight;
-
-    // Add not participated data
-    for (let id in children) {
-        if (!participatedChildren.includes(id)) {
-            const name = children[id];
-            if (yPos > pageHeight - 20) {
-                doc.addPage();
-                yPos = 20;
-            }
-            doc.text(`${id}: ${name}`, 20, yPos);
-            yPos += lineHeight;
-        }
-    }
-
-    // Save the PDF
-    doc.save('participation_data.pdf');
+// Populate participated data
+participatedChildren.forEach((id) => {
+    const name = children[id];
+    const timestamp = new Date().toLocaleString(); // Use timestamp if available, or generate it
+    participatedData.push([id, name, timestamp]);
 });
+
+// Populate not participated data
+for (let id in children) {
+    if (!participatedChildren.includes(id)) {
+        const name = children[id];
+        const timestamp = "N/A"; // No timestamp for non-participants
+        notParticipatedData.push([id, name, timestamp]);
+    }
+}
+
+// Add participated table
+doc.autoTable({
+    head: [columns],
+    body: participatedData,
+    startY: 30, // Start the table below the title
+    theme: 'grid',
+    styles: { fontSize: 10, halign: 'center', valign: 'middle' },
+});
+
+// Calculate new position after the first table
+let finalY = doc.lastAutoTable.finalY + 10;
+doc.text('Not Participated:', 20, finalY);
+
+// Add not participated table if there are non-participants
+if (notParticipatedData.length > 0) {
+    doc.autoTable({
+        head: [columns],
+        body: notParticipatedData,
+        startY: finalY + 10,
+        theme: 'grid',
+        styles: { fontSize: 10, halign: 'center', valign: 'middle' },
+    });
+}
+
+// Save the PDF
+doc.save('participation_data.pdf');
+
 
     </script>
 
