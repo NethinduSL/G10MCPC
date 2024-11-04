@@ -153,7 +153,15 @@ li:hover {
     <button id="downloadButton">Download PDF</button>
     <input type="text" id="searchInput" placeholder="Enter class and register number Eg-B32" autofocus>
     <button id="addButton">Add to Participated</button>
-
+<h3>Select a Class to Download PDF:</h3>
+        <button class="classButton" data-class="A">Class A</button>
+        <button class="classButton" data-class="B">Class B</button>
+        <button class="classButton" data-class="C">Class C</button>
+        <button class="classButton" data-class="D">Class D</button>
+        <button class="classButton" data-class="E">Class E</button>
+        <button class="classButton" data-class="F">Class F</button>
+        <button class="classButton" data-class="all">All Children</button>
+</div>
     <div class="section">
         <div class="participated" id="participatedData">
             <div class="header">Participated</div>
@@ -478,142 +486,139 @@ li:hover {
 
 
 let participatedChildren = [];
+        const childrenByClass = {
+            "A": {},
+            "B": {},
+            "C": {},
+            "D": {},
+            "E": {},
+            "F": {}
+        };
 
-// Grouping children by class
-const childrenByClass = {
-    "A": {},
-    "B": {},
-    "C": {},
-    "D": {},
-    "E": {},
-    "F": {}
-};
+        // Populate the class groups
+        for (let id in children) {
+            const classKey = id.charAt(0);
+            if (!childrenByClass[classKey]) childrenByClass[classKey] = {};
+            childrenByClass[classKey][id] = children[id];
+        }
 
-// Populate the class groups
-for (let id in children) {
-    const classKey = id.charAt(0); // Get the first character as the class
-    if (!childrenByClass[classKey]) childrenByClass[classKey] = {};
-    childrenByClass[classKey][id] = children[id];
-}
-
-function addToParticipated() {
-    const input = document.getElementById('searchInput').value.trim();
-    if (children[input] && !participatedChildren.find(child => child.id === input)) {
-        const timeStamp = new Date().toLocaleTimeString();
-        participatedChildren.push({ id: input, timestamp: timeStamp }); // Store as an object
-        const participatedList = document.getElementById('participatedList');
-        const li = document.createElement('li');
-        li.textContent = `${input} ${children[input]} - ${timeStamp}`;
-        participatedList.appendChild(li);
-    }
-    document.getElementById('searchInput').value = ''; // Clear input after adding
-    document.getElementById('searchInput').focus(); // Focus back to input
-}
-
-document.getElementById('addButton').addEventListener('click', addToParticipated);
-
-// Allow adding by pressing the Enter key
-document.getElementById('searchInput').addEventListener('keypress', function (event) {
-    if (event.key === 'Enter') {
-        addToParticipated();
-    }
-});
-
-// Automatically focus on the input box when the page loads
-window.onload = function () {
-    document.getElementById('searchInput').focus();
-    displayNotParticipated(); // Display not participated on load
-}
-
-function displayNotParticipated() {
-    const notParticipatedList = document.getElementById('notParticipatedList');
-    notParticipatedList.innerHTML = ''; // Clear previous list
-
-    for (let classKey in childrenByClass) {
-        const classHeader = document.createElement('h3');
-        classHeader.textContent = `Class ${classKey}`;
-        notParticipatedList.appendChild(classHeader);
-
-        for (let id in childrenByClass[classKey]) {
-            if (!participatedChildren.find(child => child.id === id)) {
+        function addToParticipated() {
+            const input = document.getElementById('searchInput').value.trim();
+            if (children[input] && !participatedChildren.find(child => child.id === input)) {
+                const timeStamp = new Date().toLocaleTimeString();
+                participatedChildren.push({ id: input, timestamp: timeStamp });
+                const participatedList = document.getElementById('participatedList');
                 const li = document.createElement('li');
-                li.textContent = `${id} ${children[id]}`;
-                notParticipatedList.appendChild(li);
+                li.textContent = `${input} ${children[input]} - ${timeStamp}`;
+                participatedList.appendChild(li);
             }
-        }
-    }
-}
-
-// Function to download PDF
-document.getElementById('downloadButton').addEventListener('click', function () {
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF();
-
-    // Prompt user for class selection
-    const classSelection = prompt("Enter class to download (A, B, C, D, E, F) or type 'all' for all children:");
-
-    const selectedClassData = (classSelection === 'all') ? childrenByClass : { [classSelection]: childrenByClass[classSelection] };
-
-    // Add title
-    doc.text('Participation Data', 20, 10);
-
-    // Get and format the current date
-    const currentDate = new Date();
-    const formattedDate = `${currentDate.getFullYear()}-${(currentDate.getMonth() + 1).toString().padStart(2, '0')}-${currentDate.getDate().toString().padStart(2, '0')}`;
-    doc.text(`Date: ${formattedDate}`, 20, 20);
-
-    // Iterate over selected class data
-    for (let classKey in selectedClassData) {
-        const classData = selectedClassData[classKey];
-
-        // Add participated children
-        doc.text(`Class ${classKey} - Participated:`, 20, doc.autoTable.previous.finalY + 10);
-        const participatedData = participatedChildren.filter(child => classData[child.id]);
-
-        // Create table for participated children
-        if (participatedData.length > 0) {
-            const participatedRows = participatedData.map(child => [child.id, children[child.id], child.timestamp]);
-            doc.autoTable({
-                head: [["Registration No.", "Name", "Timestamp"]],
-                body: participatedRows,
-                startY: doc.autoTable.previous.finalY + 10,
-                theme: 'grid',
-                headStyles: { fillColor: [241, 184, 29], textColor: [255, 255, 255] },
-                styles: { fontSize: 10, halign: 'center', valign: 'middle' },
-            });
-        } else {
-            doc.text('No participated children', 20, doc.autoTable.previous.finalY + 10);
+            document.getElementById('searchInput').value = ''; 
+            document.getElementById('searchInput').focus(); 
         }
 
-        // Add not participated children
-        doc.text(`Class ${classKey} - Not Participated:`, 20, doc.autoTable.previous.finalY + 10);
-        const notParticipatedRows = [];
+        document.getElementById('addButton').addEventListener('click', addToParticipated);
 
-        for (let id in classData) {
-            if (!participatedChildren.find(child => child.id === id)) {
-                notParticipatedRows.push([id, children[id], "Absent"]);
+        document.getElementById('searchInput').addEventListener('keypress', function (event) {
+            if (event.key === 'Enter') {
+                addToParticipated();
+            }
+        });
+
+        window.onload = function () {
+            document.getElementById('searchInput').focus();
+            displayNotParticipated();
+        }
+
+        function displayNotParticipated() {
+            const notParticipatedList = document.getElementById('notParticipatedList');
+            notParticipatedList.innerHTML = '';
+
+            for (let classKey in childrenByClass) {
+                const classHeader = document.createElement('h3');
+                classHeader.textContent = `Class ${classKey}`;
+                notParticipatedList.appendChild(classHeader);
+
+                for (let id in childrenByClass[classKey]) {
+                    if (!participatedChildren.find(child => child.id === id)) {
+                        const li = document.createElement('li');
+                        li.textContent = `${id} ${children[id]}`;
+                        notParticipatedList.appendChild(li);
+                    }
+                }
             }
         }
 
-        // Create table for not participated children
-        if (notParticipatedRows.length > 0) {
-            doc.autoTable({
-                head: [["Registration No.", "Name", "Timestamp"]],
-                body: notParticipatedRows,
-                startY: doc.autoTable.previous.finalY + 10,
-                theme: 'grid',
-                headStyles: { fillColor: [241, 184, 29], textColor: [255, 255, 255] },
-                styles: { fontSize: 10, halign: 'center', valign: 'middle' },
+        // Show class selection buttons
+        document.getElementById('downloadButton').addEventListener('click', function () {
+            document.getElementById('classButtons').style.display = 'block';
+        });
+
+        // Download PDF when class button is clicked
+        document.querySelectorAll('.classButton').forEach(button => {
+            button.addEventListener('click', function () {
+                const selectedClass = this.getAttribute('data-class');
+                downloadPDF(selectedClass);
+                document.getElementById('classButtons').style.display = 'none'; // Hide buttons after selection
             });
-        } else {
-            doc.text('All children participated', 20, doc.autoTable.previous.finalY + 10);
+        });
+
+        function downloadPDF(selectedClass) {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+
+            doc.text('Participation Data', 20, 10);
+            const currentDate = new Date();
+            const formattedDate = `${currentDate.getFullYear()}-${(currentDate.getMonth() + 1).toString().padStart(2, '0')}-${currentDate.getDate().toString().padStart(2, '0')}`;
+            doc.text(`Date: ${formattedDate}`, 20, 20);
+
+            const classesToProcess = (selectedClass === 'all') ? Object.keys(childrenByClass) : [selectedClass];
+
+            classesToProcess.forEach(classKey => {
+                doc.text(`Class ${classKey} - Participated:`, 20, doc.autoTable.previous.finalY + 10);
+                const participatedData = participatedChildren.filter(child => childrenByClass[classKey][child.id]);
+
+                if (participatedData.length > 0) {
+                    const participatedRows = participatedData.map(child => [child.id, children[child.id], child.timestamp]);
+                    doc.autoTable({
+                        head: [["Registration No.", "Name", "Timestamp"]],
+                        body: participatedRows,
+                        startY: doc.autoTable.previous.finalY + 10,
+                        theme: 'grid',
+                        headStyles: { fillColor: [241, 184, 29], textColor: [255, 255, 255] },
+                        styles: { fontSize: 10, halign: 'center', valign: 'middle' },
+                    });
+                } else {
+                    doc.text('No participated children', 20, doc.autoTable.previous.finalY + 10);
+                }
+
+                doc.text(`Class ${classKey} - Not Participated:`, 20, doc.autoTable.previous.finalY + 10);
+                const notParticipatedRows = [];
+
+                for (let id in childrenByClass[classKey]) {
+                    if (!participatedChildren.find(child => child.id === id)) {
+                        notParticipatedRows.push([id, children[id], "Absent"]);
+                    }
+                }
+
+                if (notParticipatedRows.length > 0) {
+                    doc.autoTable({
+                        head: [["Registration No.", "Name", "Timestamp"]],
+                        body: notParticipatedRows,
+                        startY: doc.autoTable.previous.finalY + 10,
+                        theme: 'grid',
+                        headStyles: { fillColor: [241, 184, 29], textColor: [255, 255, 255] },
+                        styles: { fontSize: 10, halign: 'center', valign: 'middle' },
+                    });
+                } else {
+                    doc.text('All children participated', 20, doc.autoTable.previous.finalY + 10);
+                }
+            });
+
+            doc.save('participation_data.pdf');
         }
-    }
 
-    // Save the PDF
-    doc.save('participation_data.pdf');
-});
 
+        
     </script>
 
 </body>
