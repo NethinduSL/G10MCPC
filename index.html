@@ -12,50 +12,58 @@ body {
     align-items: center;
     justify-content: flex-start;
     height: 100vh;
-    font-family: Arial, sans-serif;
-    background-color: rgba(255, 255, 255, 0.1); /* Faint background for glass effect */
-    backdrop-filter: blur(10px); /* Glassmorphism effect */
+    font-family: 'Arial', sans-serif;
+    background-color: #ffffff; /* Use a soft white for a clean look */
     padding: 20px;
+    margin: 0;
+    overflow: hidden; /* Prevent overflow */
 }
 
 input {
     padding: 10px;
     font-size: 16px;
     width: 300px;
-    border: 1px solid rgba(255, 255, 255, 0.5);
+    border: 1px solid #ccc;
     border-radius: 5px;
-    margin-bottom: 10px;
-    background: rgba(255, 255, 255, 0.2); /* Semi-transparent background */
-    color: white;
+    margin-bottom: 10px; /* Added margin for spacing */
+    transition: border-color 0.3s; /* Smooth border color transition */
+}
+
+input:focus {
+    border-color: #007bff; /* Change border color on focus */
+    outline: none; /* Remove default outline */
 }
 
 button {
     padding: 10px;
     font-size: 16px;
     cursor: pointer;
-    background: rgba(255, 255, 255, 0.2); /* Glassmorphism effect */
-    color: white;
+    background-color: #000000; /* Black button background */
+    color: white; /* White text color */
     border: none;
-    border-radius: 10px; /* Rounded corners */
+    border-radius: 5px;
     margin-left: 5px;
-    backdrop-filter: blur(10px); /* Glassmorphism effect */
-    transition: background-color 0.3s, transform 0.3s; /* Smooth transition */
+    transition: background-color 0.3s; /* Smooth background color transition */
 }
 
 button:hover {
-    background: rgba(255, 255, 255, 0.4); /* Change background on hover */
-    transform: scale(1.05); /* Slightly enlarge button on hover */
+    background-color: #333333; /* Darker shade on hover */
 }
 
 .section {
     margin-top: 20px;
     width: 80%;
     max-width: 600px;
+    transition: transform 0.3s; /* Animation for section */
+}
+
+.section:hover {
+    transform: scale(1.02); /* Slight scale effect on hover */
 }
 
 .participated, .not-participated {
     margin-top: 20px;
-    border-top: 1px solid rgba(255, 255, 255, 0.3); /* Light border */
+    border-top: 1px solid #ccc;
     padding-top: 10px;
 }
 
@@ -63,7 +71,7 @@ button:hover {
     font-weight: bold;
     font-size: 20px;
     margin-bottom: 10px;
-    color: white; /* Header text color */
+    color: #007bff; /* Use a blue color for header */
 }
 
 ul {
@@ -73,9 +81,14 @@ ul {
 
 li {
     padding: 5px;
-    background: rgba(233, 236, 239, 0.5); /* Semi-transparent background for list items */
+    background: #e9ecef; /* Light grey background for list items */
     border-radius: 5px;
     margin-bottom: 5px;
+    transition: background-color 0.3s; /* Smooth background color transition */
+}
+
+li:hover {
+    background: #d0d0d0; /* Darker grey on hover */
 }
 
 #downloadButton {
@@ -84,15 +97,14 @@ li {
     left: 20px;
 }
 
-/* Responsive styles */
-@media (max-width: 600px) {
-    input {
-        width: 90%; /* Full width on small screens */
-    }
+.fade-in {
+    opacity: 0; /* Start invisible */
+    animation: fadeIn 1s forwards; /* Fade in effect */
+}
 
-    button {
-        width: 90%; /* Full width on small screens */
-    }
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
 }
 
 
