@@ -559,14 +559,15 @@ function displayNotParticipated() {
 // Pop-up for class selection
 function showClassSelection() {
     const popup = document.createElement('div');
-    popup.style.position = 'fixed';
-    popup.style.top = '50%';
-    popup.style.left = '50%';
-    popup.style.transform = 'translate(-50%, -50%)';
-    popup.style.padding = '20px';
-    popup.style.border-radius: 8px; 
-    popup.style.backgroundColor = 'white';
-    popup.style.boxShadow = '0 0 10px rgba(0,0,0,0.5)';
+popup.style.position = 'fixed';
+popup.style.top = '50%';
+popup.style.left = '50%';
+popup.style.transform = 'translate(-50%, -50%)';
+popup.style.padding = '20px';
+popup.style.borderRadius = '8px'; // Fixed the property name
+popup.style.backgroundColor = 'white';
+popup.style.boxShadow = '0 0 10px rgba(0,0,0,0.5)';
+
     popup.innerHTML = `
         <h2>Select Class to Download</h2>
        <center> <button onclick="downloadPDF('A')">Class A</button></center>
